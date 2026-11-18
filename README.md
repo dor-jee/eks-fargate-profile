@@ -1,4 +1,4 @@
-# eks-fargate-profile
+# EKS Fargate Profile
 
 ![AWS](https://img.shields.io/badge/AWS-EKS-FF9900?logo=amazonaws&logoColor=white)
 ![Fargate](https://img.shields.io/badge/AWS-Fargate-FF9900?logo=amazonaws&logoColor=white)
@@ -63,3 +63,35 @@ git clone https://gitlab.com/cloudbuildops/eks-fargate-profile.git
 |---|---|
 | `nginx-config.yaml` | Sample nginx Deployment in namespace `dev` and a `LoadBalancer` Service, used to test the Fargate profile |
 
+
+### 1. Create the IAM role for Fargate
+
+Fargate needs a pod execution role. It allows access to the other AWS service resources that are required to run Amazon EKS pods on AWS Fargate.
+
+1. Go to **IAM → Roles → Create role**.
+2. Trusted entity type: **AWS service**.
+3. Use case: **EKS**, then **EKS - Fargate pod**.
+4. Role name: `eks-fargate-role`.
+
+### 2. Create the Fargate profile
+
+A Fargate profile is a rule that specifies which pods use Fargate when they are launched.
+
+1. Go to **EKS**, select the cluster `eks-cluster-test` and open the **Compute** tab. Below the node groups you will see **Fargate profiles**.
+2. Profile configuration:
+   - Name: `dev-profile`
+   - Pod execution role: `eks-fargate-role`, the role from step 1
+   - Subnets: the private subnets of the cluster VPC. The VPC is required because Fargate pods get their IP addresses from your subnet IP range.
+3. Pod selectors:
+   - Namespace: `dev`
+   - Match labels: key `profile`, value `fargate`
+
+<img src="screenshots/01-fargate-pod-selection.png" alt="Configure pod selection: namespace dev, match label profile=fargate" width="800">
+
+Pod selectors cannot be changed after the profile is created, so check them before the final step.
+
+After creation the profile shows status `Active`, with the subnets and role ARNs on the Details tab:
+
+<img src="screenshots/02-fargate-profile-details.png" alt="dev-profile details: Active, two subnets, pod execution role eks-fargate-role" width="800">
+
+<img src="screenshots/03-fargate-profile-pod-selectors.png" alt="dev-profile Pod selectors tab: namespace dev, match label profile=fargate" width="800">
